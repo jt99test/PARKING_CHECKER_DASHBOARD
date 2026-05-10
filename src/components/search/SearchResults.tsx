@@ -103,6 +103,7 @@ export function SearchResults({ query, vehicles, loading = false, onVehicleClick
                       className="h-full w-full object-cover"
                       height={40}
                       src={vehicle.lastPhotoUrl}
+                      unoptimized
                       width={40}
                     />
                   ) : (

@@ -14,6 +14,7 @@ export interface Vehicle {
   plateNumber: string | null;
   vin: string | null;
   currentLot: string;
+  lastLocation: GeoLocation | null;
   lastMovedAt: Date;
   lastMovedBy: string;
   lastMovedByUid: string;
@@ -28,6 +29,12 @@ export interface Vehicle {
   mergedAt?: Date | null;
   mergedBy?: string | null;
   mergedFromIds?: string[];
+}
+
+export interface GeoLocation {
+  latitude: number;
+  longitude: number;
+  label?: string | null;
 }
 
 export type IdentifierType = "plate" | "vin";
@@ -45,6 +52,7 @@ export interface Movement {
   timestamp: Date;
   notes: string | null;
   photoUrl: string;
+  location: GeoLocation | null;
   hadDiscrepancy?: boolean;
   systemFromLot?: string | null;
   declaredFromLot?: string | null;

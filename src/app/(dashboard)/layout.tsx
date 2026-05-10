@@ -1,6 +1,7 @@
 "use client";
 
 import { LogOut, Menu } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -20,11 +21,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/", label: "Inventario" },
   { href: "/actividad", label: "Actividad" },
-  { href: "/buscar", label: "Buscar" },
+  { href: "/inventario", label: "Inventario" },
   { href: "/empleados", label: "Empleados" },
-  { href: "/herramientas", label: "Herramientas" },
 ];
 
 function isActivePath(pathname: string, href: string) {
@@ -53,6 +52,21 @@ function LoadingScreen() {
         <Skeleton className="h-28 w-full" />
       </div>
     </main>
+  );
+}
+
+function VWMark() {
+  return (
+    <span className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-white/25 bg-white shadow-sm">
+      <Image
+        alt="Volkswagen"
+        className="scale-125 object-cover"
+        fill
+        priority
+        sizes="40px"
+        src="/vw-logo.png"
+      />
+    </span>
   );
 }
 
@@ -97,13 +111,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
+      <header className="sticky top-0 z-40 border-b border-[#101858] bg-accent shadow-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center gap-4 px-4 sm:px-6 lg:px-8">
-          <Link className="flex items-center gap-3 font-semibold text-foreground" href="/">
-            <span className="h-3 w-3 rounded-full bg-primary shadow-[0_0_0_4px_rgba(0,176,240,0.15)]" />
-            <span>Parking Tracker</span>
-            <span className="rounded-md border border-primary/30 bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold uppercase text-primary">
-              Beta
+          <Link className="flex items-center gap-3 font-semibold text-white" href="/actividad">
+            <VWMark />
+            <span className="leading-tight">
+              <span className="block">Trackeador VW</span>
             </span>
           </Link>
 
@@ -111,8 +124,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {navItems.map((item) => (
               <Link
                 className={cn(
-                  "rounded-md border-b-2 border-transparent px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground",
-                  isActivePath(pathname, item.href) && "border-primary text-primary",
+                  "rounded-md border border-transparent px-3 py-2 text-sm font-medium text-white/70 transition-colors hover:bg-white/10 hover:text-white",
+                  isActivePath(pathname, item.href) && "border-white/15 bg-white text-accent shadow-sm",
                 )}
                 href={item.href}
                 key={item.href}
@@ -124,10 +137,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button className="ml-auto" size="icon" variant="ghost">
+              <Button className="ml-auto bg-white/10 text-white hover:bg-white hover:text-accent" size="icon" variant="ghost">
                 <Menu className="h-4 w-4 md:hidden" />
                 <Avatar className="hidden md:flex">
-                  <AvatarFallback>{getInitials(user.displayName, user.email)}</AvatarFallback>
+                  <AvatarFallback className="bg-white text-accent">{getInitials(user.displayName, user.email)}</AvatarFallback>
                 </Avatar>
                 <span className="sr-only">Abrir menú de usuario</span>
               </Button>

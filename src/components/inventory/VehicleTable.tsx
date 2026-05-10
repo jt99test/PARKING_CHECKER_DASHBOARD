@@ -1,10 +1,11 @@
 "use client";
 
-import { ArrowDownUp, CarFront } from "lucide-react";
+import { ArrowDownUp, CarFront, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { LocationMapPreview } from "@/components/inventory/LocationMapPreview";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -25,6 +26,8 @@ type SortDirection = "asc" | "desc";
 interface VehicleTableProps {
   vehicles: Vehicle[];
   loading?: boolean;
+  onDeleteVehicle?: (vehicle: Vehicle) => void;
+  onEditVehicle?: (vehicle: Vehicle) => void;
 }
 
 function getIdentifier(vehicle: Vehicle) {
@@ -50,7 +53,7 @@ function PhotoThumb({
       type="button"
     >
       {url ? (
-        <Image alt="Foto del vehículo" className="h-full w-full object-cover" height={48} src={url} width={48} />
+        <Image alt="Foto del vehículo" className="h-full w-full object-cover" height={48} src={url} unoptimized width={48} />
       ) : (
         <CarFront className="h-5 w-5 text-muted-foreground" />
       )}
@@ -58,7 +61,7 @@ function PhotoThumb({
   );
 }
 
-export function VehicleTable({ vehicles, loading = false }: VehicleTableProps) {
+export function VehicleTable({ vehicles, loading = false, onDeleteVehicle, onEditVehicle }: VehicleTableProps) {
   const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey>("lastMovedAt");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -75,6 +78,8 @@ export function VehicleTable({ vehicles, loading = false }: VehicleTableProps) {
       return (a.lastMovedAt.getTime() - b.lastMovedAt.getTime()) * modifier;
     });
   }, [sortDirection, sortKey, vehicles]);
+  const hasLocations = useMemo(() => vehicles.some((vehicle) => vehicle.lastLocation), [vehicles]);
+  const hasActions = Boolean(onDeleteVehicle || onEditVehicle);
 
   function toggleSort(nextKey: SortKey) {
     if (sortKey === nextKey) {
@@ -135,6 +140,7 @@ export function VehicleTable({ vehicles, loading = false }: VehicleTableProps) {
                 </Button>
               </TableHead>
               <TableHead>Marca</TableHead>
+              {hasLocations ? <TableHead className="min-w-64">Ubicacion</TableHead> : null}
               <TableHead>
                 <Button
                   className="-ml-3"
@@ -146,6 +152,7 @@ export function VehicleTable({ vehicles, loading = false }: VehicleTableProps) {
                   <ArrowDownUp className="h-3.5 w-3.5" />
                 </Button>
               </TableHead>
+              {hasActions ? <TableHead className="w-48">Acciones</TableHead> : null}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -180,10 +187,37 @@ export function VehicleTable({ vehicles, loading = false }: VehicleTableProps) {
                   </div>
                 </TableCell>
                 <TableCell>{vehicle.brand ?? <span className="text-muted-foreground">—</span>}</TableCell>
+                {hasLocations ? (
+                  <TableCell onClick={(event) => event.stopPropagation()}>
+                    {vehicle.lastLocation ? (
+                      <LocationMapPreview location={vehicle.lastLocation} />
+                    ) : (
+                      <span className="text-muted-foreground">Sin mapa</span>
+                    )}
+                  </TableCell>
+                ) : null}
                 <TableCell>
                   <p>{formatTimeAgo(vehicle.lastMovedAt)}</p>
                   <p className="text-xs text-muted-foreground">por {vehicle.lastMovedBy || "—"}</p>
                 </TableCell>
+                {hasActions ? (
+                  <TableCell onClick={(event) => event.stopPropagation()}>
+                    <div className="flex flex-wrap gap-2">
+                      {onEditVehicle ? (
+                        <Button onClick={() => onEditVehicle(vehicle)} size="sm" variant="outline">
+                          <Pencil className="h-3.5 w-3.5" />
+                          Editar
+                        </Button>
+                      ) : null}
+                      {onDeleteVehicle ? (
+                        <Button onClick={() => onDeleteVehicle(vehicle)} size="sm" variant="outline">
+                          <Trash2 className="h-3.5 w-3.5" />
+                          Borrar
+                        </Button>
+                      ) : null}
+                    </div>
+                  </TableCell>
+                ) : null}
               </TableRow>
             ))}
           </TableBody>

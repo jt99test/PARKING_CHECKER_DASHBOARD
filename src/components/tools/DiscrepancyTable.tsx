@@ -45,7 +45,7 @@ export function DiscrepancyTable({ movements }: { movements: Movement[] }) {
               <TableCell>
                 <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-muted">
                   {movement.photoUrl ? (
-                    <Image alt="Foto" className="h-full w-full object-cover" height={40} src={movement.photoUrl} width={40} />
+                    <Image alt="Foto" className="h-full w-full object-cover" height={40} src={movement.photoUrl} unoptimized width={40} />
                   ) : (
                     <CarFront className="h-4 w-4 text-muted-foreground" />
                   )}

@@ -151,6 +151,7 @@ export function MovementTable({ movements, loading = false }: MovementTableProps
                         className="h-full w-full object-cover"
                         height={40}
                         src={movement.photoUrl}
+                        unoptimized
                         width={40}
                       />
                     ) : (

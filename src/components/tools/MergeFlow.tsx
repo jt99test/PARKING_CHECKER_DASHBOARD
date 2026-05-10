@@ -21,7 +21,7 @@ function VehicleCard({ vehicle, label }: { vehicle: Vehicle; label: string }) {
         <p className="text-sm font-semibold text-muted-foreground">{label}</p>
         <div className="relative aspect-video overflow-hidden rounded-md bg-muted">
           {vehicle.lastPhotoUrl ? (
-            <Image alt="Foto del coche" className="object-cover" fill sizes="320px" src={vehicle.lastPhotoUrl} />
+            <Image alt="Foto del coche" className="object-cover" fill sizes="320px" src={vehicle.lastPhotoUrl} unoptimized />
           ) : (
             <div className="flex h-full items-center justify-center">
               <CarFront className="h-8 w-8 text-muted-foreground" />

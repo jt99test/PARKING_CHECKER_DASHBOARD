@@ -1,6 +1,6 @@
 "use client";
 
-import { PARKING_LOTS, RECEPTION_LOT, SOLD_LOT } from "@/lib/constants";
+import { PARKING_LOTS, RECEPTION_LOT } from "@/lib/constants";
 import { DateRangePicker } from "@/components/date-range-picker";
 
 export type PeriodOption = "hoy" | "ayer" | "ultimos-7-dias" | "este-mes" | "personalizado";
@@ -18,18 +18,22 @@ export interface MovementFilterState {
 interface MovementFiltersProps {
   filters: MovementFilterState;
   employees: string[];
+  lotOptions?: string[];
   onChange: (filters: MovementFilterState) => void;
   onClear: () => void;
 }
 
-const lots = [...PARKING_LOTS, RECEPTION_LOT, SOLD_LOT];
+const defaultLots = [...PARKING_LOTS, RECEPTION_LOT];
 
 export function MovementFilters({
   filters,
   employees,
+  lotOptions,
   onChange,
   onClear,
 }: MovementFiltersProps) {
+  const lots = lotOptions?.length ? lotOptions : defaultLots;
+
   return (
     <div className="sticky top-16 z-30 space-y-3 rounded-lg border bg-card/95 p-4 shadow-sm backdrop-blur">
       <div className="grid gap-3 md:grid-cols-5">

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { LocationMapPreview } from "@/components/inventory/LocationMapPreview";
 import { VehicleStateCard } from "@/components/inventory/VehicleStateCard";
 import { PhotoLightbox } from "@/components/photo-lightbox";
 import { Button } from "@/components/ui/button";
@@ -79,6 +80,7 @@ function MovementHistory({
             <TableHead>Fecha y hora</TableHead>
             <TableHead>Origen → Destino</TableHead>
             <TableHead>Empleado</TableHead>
+            <TableHead>Mapa</TableHead>
             <TableHead>Notas</TableHead>
             <TableHead className="w-20">Foto</TableHead>
           </TableRow>
@@ -108,6 +110,15 @@ function MovementHistory({
                 <span className="font-medium">{movement.toLot || "—"}</span>
               </TableCell>
               <TableCell>{movement.employeeName || "—"}</TableCell>
+              <TableCell>
+                {movement.location ? (
+                  <div className="w-56">
+                    <LocationMapPreview location={movement.location} />
+                  </div>
+                ) : (
+                  <span className="text-muted-foreground">—</span>
+                )}
+              </TableCell>
               <TableCell className="max-w-xs text-muted-foreground">
                 {movement.notes || "—"}
               </TableCell>
@@ -125,6 +136,7 @@ function MovementHistory({
                       className="h-full w-full object-cover"
                       height={48}
                       src={movement.photoUrl}
+                      unoptimized
                       width={48}
                     />
                   </button>
@@ -197,6 +209,13 @@ export default function VehicleDetailPage() {
   const mainPhoto = galleryPhotos[0] ?? (vehicle?.lastPhotoUrl
     ? { url: vehicle.lastPhotoUrl, timestamp: vehicle.lastMovedAt, id: vehicle.id }
     : null);
+  const latestMovementLocation = movements.find((movement) => movement.location)?.location ?? null;
+  const displayVehicle = vehicle
+    ? {
+        ...vehicle,
+        lastLocation: vehicle.lastLocation ?? latestMovementLocation,
+      }
+    : null;
 
   if (loading) {
     return <LoadingDetail />;
@@ -261,6 +280,7 @@ export default function VehicleDetailPage() {
                 fill
                 sizes="(min-width: 1024px) 60vw, 100vw"
                 src={mainPhoto.url}
+                unoptimized
               />
             </button>
           ) : (
@@ -282,6 +302,7 @@ export default function VehicleDetailPage() {
                     fill
                     sizes="80px"
                     src={photo.url}
+                    unoptimized
                   />
                 </button>
               ))
@@ -291,7 +312,7 @@ export default function VehicleDetailPage() {
           </div>
         </div>
 
-        <VehicleStateCard vehicle={vehicle} />
+        <VehicleStateCard vehicle={displayVehicle ?? vehicle} />
       </section>
 
       <section className="space-y-4">

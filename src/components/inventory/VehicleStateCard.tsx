@@ -1,4 +1,5 @@
 import { MapPin } from "lucide-react";
+import { LocationMapPreview } from "@/components/inventory/LocationMapPreview";
 import { Card, CardContent } from "@/components/ui/card";
 import { formatDateTime, formatTimeAgo } from "@/lib/date";
 import { formatNumber } from "@/lib/format";
@@ -44,6 +45,8 @@ export function VehicleStateCard({ vehicle }: { vehicle: Vehicle }) {
             Vinculado
           </span>
         ) : null}
+
+        {vehicle.lastLocation ? <LocationMapPreview location={vehicle.lastLocation} /> : null}
       </CardContent>
     </Card>
   );

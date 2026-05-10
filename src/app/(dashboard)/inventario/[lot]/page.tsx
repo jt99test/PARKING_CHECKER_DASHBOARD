@@ -5,12 +5,15 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { SearchBar } from "@/components/search/SearchBar";
 import { VehicleTable } from "@/components/inventory/VehicleTable";
 import { RECEPTION_LOT, SOLD_LOT } from "@/lib/constants";
 import { downloadInventoryCsv } from "@/lib/csv";
 import { formatNumber } from "@/lib/format";
-import { getVehiclesInLot } from "@/lib/queries";
-import type { Vehicle } from "@/lib/types";
+import { deleteMovement, getLatestMovementForVehicle, getVehiclesInLot, updateMovement } from "@/lib/queries";
+import type { Movement, Vehicle } from "@/lib/types";
 
 function normalizeLotParam(value: string) {
   const decoded = decodeURIComponent(value);
@@ -68,6 +71,12 @@ export default function InventoryLotPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState("");
   const [soldLast30Only, setSoldLast30Only] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [editingMovement, setEditingMovement] = useState<Movement | null>(null);
+  const [editFromLot, setEditFromLot] = useState("");
+  const [editToLot, setEditToLot] = useState("");
+  const [editNotes, setEditNotes] = useState("");
+  const [savingMovement, setSavingMovement] = useState(false);
 
   const refresh = useCallback(async (manual = false) => {
     if (manual) {
@@ -95,9 +104,92 @@ export default function InventoryLotPage() {
     return () => window.clearInterval(interval);
   }, [refresh]);
 
+  const filteredVehicles = useMemo(() => {
+    const normalizedQuery = searchQuery.trim().toUpperCase();
+
+    if (normalizedQuery.length < 2) {
+      return vehicles;
+    }
+
+    return vehicles.filter((vehicle) => {
+      return (
+        vehicle.plateNumber?.includes(normalizedQuery) ||
+        vehicle.vin?.includes(normalizedQuery)
+      );
+    });
+  }, [searchQuery, vehicles]);
+
+  async function openEditVehicle(vehicle: Vehicle) {
+    try {
+      setError("");
+      const movement = await getLatestMovementForVehicle(vehicle.id);
+
+      if (!movement) {
+        setError("Este coche no tiene movimientos para editar.");
+        return;
+      }
+
+      setEditingMovement(movement);
+      setEditFromLot(movement.fromLot);
+      setEditToLot(movement.toLot);
+      setEditNotes(movement.notes ?? "");
+    } catch {
+      setError("No se pudo cargar el movimiento para editar.");
+    }
+  }
+
+  async function handleDeleteVehicle(vehicle: Vehicle) {
+    const confirmed = window.confirm(
+      `Borrar el ultimo movimiento de ${vehicle.plateNumber ?? vehicle.vin ?? "este coche"}?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      setError("");
+      const movement = await getLatestMovementForVehicle(vehicle.id);
+
+      if (!movement) {
+        setError("Este coche no tiene movimientos para borrar.");
+        return;
+      }
+
+      await deleteMovement(movement);
+      await refresh(true);
+    } catch {
+      setError("No se pudo borrar el movimiento.");
+    }
+  }
+
+  async function handleSaveMovement() {
+    if (!editingMovement) {
+      return;
+    }
+
+    setSavingMovement(true);
+    setError("");
+
+    try {
+      await updateMovement(editingMovement, {
+        fromLot: editFromLot.trim(),
+        toLot: editToLot.trim(),
+        notes: editNotes.trim() || null,
+      });
+      setEditingMovement(null);
+      await refresh(true);
+    } catch {
+      setError("No se pudo editar el movimiento.");
+    } finally {
+      setSavingMovement(false);
+    }
+  }
+
   return (
+    <>
     <div className="space-y-6">
-      <Link className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" href="/">
+      <Link className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground" href="/inventario">
         <ArrowLeft className="h-4 w-4" />
         Inventario / {lotName}
       </Link>
@@ -132,7 +224,52 @@ export default function InventoryLotPage() {
         </div>
       ) : null}
 
-      <VehicleTable loading={loading} vehicles={vehicles} />
+      <SearchBar
+        onChange={setSearchQuery}
+        onClear={() => setSearchQuery("")}
+        value={searchQuery}
+      />
+
+      <VehicleTable
+        loading={loading}
+        onDeleteVehicle={handleDeleteVehicle}
+        onEditVehicle={openEditVehicle}
+        vehicles={filteredVehicles}
+      />
     </div>
+    <Dialog open={Boolean(editingMovement)} onOpenChange={(open) => !open && setEditingMovement(null)}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Editar movimiento</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <label className="space-y-1 text-sm">
+            <span className="font-medium">Origen</span>
+            <Input value={editFromLot} onChange={(event) => setEditFromLot(event.target.value)} />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="font-medium">Destino</span>
+            <Input value={editToLot} onChange={(event) => setEditToLot(event.target.value)} />
+          </label>
+          <label className="space-y-1 text-sm">
+            <span className="font-medium">Notas</span>
+            <textarea
+              className="min-h-24 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              onChange={(event) => setEditNotes(event.target.value)}
+              value={editNotes}
+            />
+          </label>
+          <div className="flex justify-end gap-3">
+            <Button disabled={savingMovement} onClick={() => setEditingMovement(null)} variant="outline">
+              Cancelar
+            </Button>
+            <Button disabled={savingMovement || !editToLot.trim()} onClick={handleSaveMovement}>
+              {savingMovement ? "Guardando..." : "Guardar"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+    </>
   );
 }

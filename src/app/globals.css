@@ -2,24 +2,24 @@
 
 :root {
   --radius: 0.5rem;
-  --background: #fafafa;
-  --foreground: #0f172a;
+  --background: #f7f5f3;
+  --foreground: #202735;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #202735;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #00b0f0;
-  --primary-foreground: #001e50;
-  --secondary: #f1f5f9;
-  --secondary-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --accent: #001e50;
+  --popover-foreground: #202735;
+  --primary: #0a84d6;
+  --primary-foreground: #ffffff;
+  --secondary: #eceff4;
+  --secondary-foreground: #202735;
+  --muted: #f0eeee;
+  --muted-foreground: #5f6673;
+  --accent: #070d3c;
   --accent-foreground: #ffffff;
   --destructive: #dc2626;
-  --border: #e2e8f0;
-  --input: #cbd5e1;
-  --ring: #00b0f0;
+  --border: #ddd8d3;
+  --input: #c9c4bf;
+  --ring: #0a84d6;
 }
 
 @theme inline {

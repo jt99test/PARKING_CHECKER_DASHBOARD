@@ -18,8 +18,8 @@ const tools = [
   {
     href: "/herramientas/lotes",
     icon: MapPin,
-    title: "Gestión lotes",
-    description: "Renombra los lotes del concesionario.",
+    title: "Gestionar lotes",
+    description: "Renombra lotes en inventario y movimientos.",
   },
   {
     href: "/herramientas/exportar",

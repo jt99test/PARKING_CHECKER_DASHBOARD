@@ -11,3 +11,11 @@ export const PARKING_LOTS = [
 
 export const RECEPTION_LOT = "Recepción";
 export const SOLD_LOT = "Vendido";
+export const OTHER_LOT = "Otros";
+
+export const GPS_LOT_ALIASES = [
+  "Ubicacion GPS",
+  "Ubicación GPS",
+  "Lote GPS",
+  "GPS",
+] as const;

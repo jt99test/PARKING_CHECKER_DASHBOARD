@@ -32,6 +32,7 @@ export function PhotoLightbox({
               className="max-h-[82vh] w-auto rounded-md object-contain"
               height={1000}
               src={imageUrl}
+              unoptimized
               width={1400}
             />
           ) : (
