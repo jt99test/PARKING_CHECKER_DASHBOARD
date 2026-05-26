@@ -16,6 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/date";
+import { getMovementPhotoUrls } from "@/lib/photos";
 import type { Movement } from "@/lib/types";
 
 type SortKey = "timestamp" | "identifier" | "employee";
@@ -129,7 +130,11 @@ export function MovementTable({ movements, loading = false }: MovementTableProps
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sortedMovements.map((movement) => (
+            {sortedMovements.map((movement) => {
+              const photoUrls = getMovementPhotoUrls(movement);
+              const primaryPhotoUrl = photoUrls[0] ?? null;
+
+              return (
               <TableRow
                 className="cursor-pointer"
                 key={movement.id}
@@ -137,26 +142,31 @@ export function MovementTable({ movements, loading = false }: MovementTableProps
               >
                 <TableCell>
                   <button
-                    className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-muted"
-                    disabled={!movement.photoUrl}
+                    className="relative flex h-10 w-10 items-center justify-center overflow-hidden rounded-md bg-muted"
+                    disabled={!primaryPhotoUrl}
                     onClick={(event) => {
                       event.stopPropagation();
                       setLightboxMovement(movement);
                     }}
                     type="button"
                   >
-                    {movement.photoUrl ? (
+                    {primaryPhotoUrl ? (
                       <Image
                         alt="Foto del movimiento"
                         className="h-full w-full object-cover"
                         height={40}
-                        src={movement.photoUrl}
+                        src={primaryPhotoUrl}
                         unoptimized
                         width={40}
                       />
                     ) : (
                       <CarFront className="h-4 w-4 text-muted-foreground" />
                     )}
+                    {photoUrls.length > 1 ? (
+                      <span className="absolute bottom-0 right-0 rounded-tl bg-black/75 px-1 text-[10px] font-semibold text-white">
+                        +{photoUrls.length - 1}
+                      </span>
+                    ) : null}
                   </button>
                 </TableCell>
                 <TableCell>{formatDateTime(movement.timestamp)}</TableCell>
@@ -188,12 +198,14 @@ export function MovementTable({ movements, loading = false }: MovementTableProps
                   ) : null}
                 </TableCell>
               </TableRow>
-            ))}
+              );
+            })}
           </TableBody>
         </Table>
       </div>
       <PhotoLightbox
-        imageUrl={lightboxMovement?.photoUrl ?? null}
+        imageUrl={getMovementPhotoUrls(lightboxMovement ?? {})[0] ?? null}
+        imageUrls={getMovementPhotoUrls(lightboxMovement ?? {})}
         onOpenChange={(open) => !open && setLightboxMovement(null)}
         open={Boolean(lightboxMovement)}
         timestamp={lightboxMovement?.timestamp}

@@ -19,12 +19,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatDateTime } from "@/lib/date";
+import { getMovementPhotoUrls } from "@/lib/photos";
 import { getMovementsForVehicle, getVehicleById } from "@/lib/queries";
 import type { Movement, Vehicle } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 interface LightboxPhoto {
-  url: string;
+  photos: string[];
+  index: number;
   timestamp: Date;
 }
 
@@ -123,23 +125,33 @@ function MovementHistory({
                 {movement.notes || "—"}
               </TableCell>
               <TableCell>
-                {movement.photoUrl ? (
-                  <button
-                    className="h-12 w-12 overflow-hidden rounded-md bg-muted"
-                    onClick={() =>
-                      onPhotoClick({ url: movement.photoUrl, timestamp: movement.timestamp })
-                    }
-                    type="button"
-                  >
-                    <Image
-                      alt="Foto del movimiento"
-                      className="h-full w-full object-cover"
-                      height={48}
-                      src={movement.photoUrl}
-                      unoptimized
-                      width={48}
-                    />
-                  </button>
+                {getMovementPhotoUrls(movement).length > 0 ? (
+                  <div className="flex max-w-40 flex-wrap gap-2">
+                    {getMovementPhotoUrls(movement).map((photoUrl, index, photoUrls) => (
+                      <button
+                        className="relative h-12 w-12 overflow-hidden rounded-md bg-muted"
+                        key={`${movement.id}-${photoUrl}-${index}`}
+                        onClick={() =>
+                          onPhotoClick({ photos: photoUrls, index, timestamp: movement.timestamp })
+                        }
+                        type="button"
+                      >
+                        <Image
+                          alt="Foto del movimiento"
+                          className="h-full w-full object-cover"
+                          height={48}
+                          src={photoUrl}
+                          unoptimized
+                          width={48}
+                        />
+                        {index === 0 && photoUrls.length > 1 ? (
+                          <span className="absolute bottom-0 right-0 rounded-tl bg-black/75 px-1 text-[10px] font-semibold text-white">
+                            +{photoUrls.length - 1}
+                          </span>
+                        ) : null}
+                      </button>
+                    ))}
+                  </div>
                 ) : (
                   <PhotoPlaceholder className="h-12 w-12" />
                 )}
@@ -197,13 +209,13 @@ export default function VehicleDetailPage() {
   }, [refresh]);
 
   const galleryPhotos = useMemo(() => {
-    return movements
-      .filter((movement) => movement.photoUrl)
-      .map((movement) => ({
-        url: movement.photoUrl,
+    return movements.flatMap((movement) =>
+      getMovementPhotoUrls(movement).map((url, index) => ({
+        url,
         timestamp: movement.timestamp,
-        id: movement.id,
-      }));
+        id: `${movement.id}-${index}`,
+      })),
+    );
   }, [movements]);
 
   const mainPhoto = galleryPhotos[0] ?? (vehicle?.lastPhotoUrl
@@ -270,7 +282,13 @@ export default function VehicleDetailPage() {
             <button
               className="relative block aspect-[4/3] w-full overflow-hidden rounded-lg bg-muted"
               onClick={() =>
-                setLightboxPhoto({ url: mainPhoto.url, timestamp: mainPhoto.timestamp })
+                setLightboxPhoto({
+                  photos: galleryPhotos.length > 0 ? galleryPhotos.map((photo) => photo.url) : [mainPhoto.url],
+                  index: galleryPhotos.findIndex((photo) => photo.url === mainPhoto.url) >= 0
+                    ? galleryPhotos.findIndex((photo) => photo.url === mainPhoto.url)
+                    : 0,
+                  timestamp: mainPhoto.timestamp,
+                })
               }
               type="button"
             >
@@ -289,11 +307,17 @@ export default function VehicleDetailPage() {
 
           <div className="flex gap-3 overflow-x-auto pb-1">
             {galleryPhotos.length > 0 ? (
-              galleryPhotos.map((photo) => (
+              galleryPhotos.map((photo, index) => (
                 <button
                   className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted"
                   key={photo.id}
-                  onClick={() => setLightboxPhoto({ url: photo.url, timestamp: photo.timestamp })}
+                  onClick={() =>
+                    setLightboxPhoto({
+                      photos: galleryPhotos.map((galleryPhoto) => galleryPhoto.url),
+                      index,
+                      timestamp: photo.timestamp,
+                    })
+                  }
                   type="button"
                 >
                   <Image
@@ -321,7 +345,9 @@ export default function VehicleDetailPage() {
       </section>
 
       <PhotoLightbox
-        imageUrl={lightboxPhoto?.url ?? null}
+        imageUrl={lightboxPhoto?.photos[lightboxPhoto.index] ?? null}
+        imageUrls={lightboxPhoto?.photos}
+        initialIndex={lightboxPhoto?.index}
         onOpenChange={(open) => !open && setLightboxPhoto(null)}
         open={Boolean(lightboxPhoto)}
         timestamp={lightboxPhoto?.timestamp}

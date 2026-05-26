@@ -52,6 +52,7 @@ export interface Movement {
   timestamp: Date;
   notes: string | null;
   photoUrl: string;
+  photoUrls: string[];
   location: GeoLocation | null;
   hadDiscrepancy?: boolean;
   systemFromLot?: string | null;

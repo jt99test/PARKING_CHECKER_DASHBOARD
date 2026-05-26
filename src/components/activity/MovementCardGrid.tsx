@@ -3,9 +3,12 @@
 import { AlertTriangle, CarFront, MapPin, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { PhotoLightbox } from "@/components/photo-lightbox";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatDateTime } from "@/lib/date";
+import { getMovementPhotoUrls } from "@/lib/photos";
 import type { Movement } from "@/lib/types";
 
 interface MovementCardGridProps {
@@ -36,6 +39,7 @@ export function MovementCardGrid({
   selectedVehicleIds = new Set(),
 }: MovementCardGridProps) {
   const router = useRouter();
+  const [lightboxMovement, setLightboxMovement] = useState<Movement | null>(null);
 
   if (loading) {
     return (
@@ -65,25 +69,30 @@ export function MovementCardGrid({
   }
 
   return (
+    <>
     <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-      {movements.map((movement) => (
+      {movements.map((movement) => {
+        const photoUrls = getMovementPhotoUrls(movement);
+        const primaryPhotoUrl = photoUrls[0] ?? null;
+
+        return (
         <article
           className="group overflow-hidden rounded-lg border bg-card text-left shadow-sm transition hover:-translate-y-0.5 hover:border-primary/50 hover:shadow-md"
           key={movement.id}
         >
           <button
-            className="block w-full text-left"
-            onClick={() => router.push(`/coche/${movement.vehicleId}`)}
+            className="relative block aspect-[4/3] w-full bg-muted text-left"
+            disabled={!primaryPhotoUrl}
+            onClick={() => setLightboxMovement(movement)}
             type="button"
           >
-            <div className="relative aspect-[4/3] bg-muted">
-            {movement.photoUrl ? (
+            {primaryPhotoUrl ? (
               <Image
                 alt="Foto del movimiento"
                 className="object-cover transition duration-200 group-hover:scale-[1.02]"
                 fill
                 sizes="(min-width: 1280px) 25vw, (min-width: 640px) 50vw, 100vw"
-                src={movement.photoUrl}
+                src={primaryPhotoUrl}
                 unoptimized
               />
             ) : (
@@ -91,6 +100,11 @@ export function MovementCardGrid({
                 <CarFront className="h-12 w-12 text-muted-foreground" />
               </div>
             )}
+            {photoUrls.length > 1 ? (
+              <span className="absolute bottom-3 right-3 rounded-md bg-black/75 px-2 py-1 text-xs font-semibold text-white shadow-sm">
+                +{photoUrls.length - 1}
+              </span>
+            ) : null}
             {movement.hadDiscrepancy ? (
               <span className="absolute right-3 top-3 rounded-md bg-white/90 p-1.5 text-destructive shadow-sm">
                 <AlertTriangle className="h-4 w-4" />
@@ -101,7 +115,12 @@ export function MovementCardGrid({
                 {selectedVehicleIds.has(movement.vehicleId) ? "Seleccionado" : "Seleccionar"}
               </span>
             ) : null}
-            </div>
+          </button>
+          <button
+            className="block w-full text-left"
+            onClick={() => router.push(`/coche/${movement.vehicleId}`)}
+            type="button"
+          >
             <div className="space-y-3 p-4">
               <div>
                 <p className="text-2xl font-bold tracking-normal text-foreground">{movementIdentifier(movement)}</p>
@@ -140,7 +159,16 @@ export function MovementCardGrid({
             </Button>
           </div>
         </article>
-      ))}
+        );
+      })}
     </section>
+    <PhotoLightbox
+      imageUrl={getMovementPhotoUrls(lightboxMovement ?? {})[0] ?? null}
+      imageUrls={getMovementPhotoUrls(lightboxMovement ?? {})}
+      onOpenChange={(open) => !open && setLightboxMovement(null)}
+      open={Boolean(lightboxMovement)}
+      timestamp={lightboxMovement?.timestamp}
+    />
+    </>
   );
 }

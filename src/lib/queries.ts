@@ -22,6 +22,7 @@ import {
 import { GPS_LOT_ALIASES, OTHER_LOT, PARKING_LOTS, RECEPTION_LOT, SOLD_LOT } from "@/lib/constants";
 import { db } from "@/lib/firebase";
 import { timestampToDate } from "@/lib/firestore";
+import { getMovementPhotoUrls } from "@/lib/photos";
 import type { AppUser, GeoLocation, Movement, Vehicle } from "@/lib/types";
 
 export type InventoryCounts = Record<string, number>;
@@ -169,6 +170,7 @@ function mapAppUser(id: string, data: DocumentData): AppUser {
 function mapMovement(id: string, data: DocumentData): Movement {
   const fromLot = String(data.fromLot ?? "");
   const toLot = String(data.toLot ?? "");
+  const photoUrls = getMovementPhotoUrls(data);
 
   return {
     id,
@@ -183,6 +185,7 @@ function mapMovement(id: string, data: DocumentData): Movement {
     timestamp: timestampToDate(data.timestamp),
     notes: data.notes ?? null,
     photoUrl: String(data.photoUrl ?? ""),
+    photoUrls,
     location: readGeoLocation(data),
     hadDiscrepancy: Boolean(data.hadDiscrepancy ?? false),
     systemFromLot: data.systemFromLot ?? null,
@@ -367,7 +370,7 @@ async function rebuildVehicleSummary(vehicleId: string) {
       lastMovedByUid: latest.employeeId,
       totalMoves: movements.length,
       firstSeenAt: Timestamp.fromDate(oldest.timestamp),
-      lastPhotoUrl: latest.photoUrl || null,
+      lastPhotoUrl: getMovementPhotoUrls(latest)[0] ?? null,
       lastLocation: latest.location,
     },
     { merge: true },
